@@ -27,7 +27,7 @@ oc apply -f config/2-ossm/smm.yaml
 Error from server: error when creating "config/2-ossm/smm.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
 ```
 
-Grant user permissions to access the mesh by granting the *mesh-user* role:
+Grant user permissions to access the mesh by granting the *mesh-user* role: <mark> This command must be executed by the OSSM admins </mark>
 ```
 oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user $user
 ```
@@ -47,14 +47,19 @@ Thus, the traffic will be balanced between the different MySQL instances.
 ### App diagram
 The traffic flow is:
 1. The sidecar intercept the request from the app container (ratings) to _mysql_.
-2. The Virtual Service and Destination Rule objects route the request from the sidecar (back) to the egress Gateway (istio-system).
+2. The Virtual Service and Destination Rule objects route the request from the sidecar ($user-back) to the egress Gateway (istio-system).
 3. At this point, the Virtual Service and Kubernetes Services objects resolve the endpoints and route the traffic through the egress Gateway.
 
 <img src="./config/full-application-flow.png" alt="Bookinfo app, front and back tiers" width=100%>
 
-### Deploy Custom Bookinfo application in separated Namespaces (productpage=front, reviews|ratings|details=back)
+### Deploy the Bookinfo application  Namespaces (productpage=$user-front, reviews|ratings|details=$user-back)
 
 #### Default OSSM networking
-First, create the Ingress Gateway and the OCP public route for the bookinfo application.
+First, create the Istio Gateway for exposing the application outside the cluster.
 
-Replace the apps.fperod.cdd1.sandbox988.opentlc.com variable in the [Gateway object](./config/3-ossm-networking/gw-ingress-http.yaml) and [OpenShift route object](./config/3-ossm-networking/route-bookinfo.yaml). Create Gateway and OpenShift route.
+Create the Istio Ingress Gateway
+```bash
+oc apply -f ./labs/1-ossm-networking/gw-ingress-http-https.yaml
+```
+
+#### Deploying the application
