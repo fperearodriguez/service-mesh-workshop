@@ -52,21 +52,6 @@ The traffic flow is:
 
 <img src="./config/full-application-flow.png" alt="Bookinfo app, front and back tiers" width=100%>
 
-### Deploying the MySQL instances
-<mark> This step is already done by the OSSM admins </mark><br/>
-As cluster-admin
-```bash
-oc new-project ddbb
-oc create -n ddbb secret generic mysql-credentials-1 --from-env-file=./mysql-deploy/params.env
-oc create -n ddbb secret generic mysql-credentials-2 --from-env-file=./mysql-deploy/params-2.env
-oc create -n ddbb secret generic mysql-credentials-3 --from-env-file=./mysql-deploy/params-3.env
-oc process -f mysql-deploy/mysql-template.yaml --param-file=mysql-deploy/params.env | oc create -n ddbb -f -
-oc process -f mysql-deploy/mysql-template.yaml --param-file=mysql-deploy/params-2.env | oc create -n ddbb -f -
-oc process -f mysql-deploy/mysql-template.yaml --param-file=mysql-deploy/params-3.env | oc create -n ddbb -f -
-```
-
-All the MySQL instances should be running in _ddbb_ project.
-
 ### Deploy Custom Bookinfo application in separated Namespaces (productpage=front, reviews|ratings|details=back)
 
 #### Default OSSM networking
