@@ -17,14 +17,14 @@ First, replace the User variables:
 export OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
 export USER_NAMESPACE=$YOUR_USER
 find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$EXTERNAL_DOMAIN/$OCP_DOMAIN/g"
-find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$USER_NAMESPACE/user1/g"
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$USER_NAMESPACE/$USER_NAMESPACE/g"
 ```
 
 If you try to create the Service Mesh Member object, you will receive the following error:
 ```
-oc apply -f config/2-ossm/smm.yaml
+oc apply -f ./labs/1-ossm-networking/smm-front.yaml
 ----
-Error from server: error when creating "config/2-ossm/smm.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
+Error from server: error when creating "./labs/1-ossm-networking/smm-front.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
 ```
 
 Grant user permissions to access the mesh by granting the *mesh-user* role: <mark> This command must be executed by the OSSM admins </mark>
@@ -50,16 +50,22 @@ The traffic flow is:
 2. The Virtual Service and Destination Rule objects route the request from the sidecar ($user-back) to the egress Gateway (istio-system).
 3. At this point, the Virtual Service and Kubernetes Services objects resolve the endpoints and route the traffic through the egress Gateway.
 
-<img src="./config/full-application-flow.png" alt="Bookinfo app, front and back tiers" width=100%>
+<img src="./full-application-flow.png" alt="Bookinfo app, front and back tiers" width=100%>
 
 ### Deploy the Bookinfo application  Namespaces (productpage=$user-front, reviews|ratings|details=$user-back)
 
+First, add the OCP projects to the Service Mesh:
+```bash
+oc apply -n $USER_NAMESPACE-front -f 1-ossm-networking/smm-front.yaml
+oc apply -n $USER_NAMESPACE-back -f 1-ossm-networking/smm-back.yaml
+```
+
 #### Default OSSM networking
-First, create the Istio Gateway for exposing the application outside the cluster.
+Create the Istio Gateway for exposing the application outside the cluster.
 
 Create the Istio Ingress Gateway
 ```bash
 oc apply -f ./labs/1-ossm-networking/gw-ingress-http-https.yaml
 ```
 
-#### Deploying the application
+#### Deploying the Bookinfo application

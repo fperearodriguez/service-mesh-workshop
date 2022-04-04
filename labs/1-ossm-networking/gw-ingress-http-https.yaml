@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: ingress-gateway
-  namespace: $USER_NAMESPACE
+  namespace: $USER_NAMESPACE-front
 spec:
   selector:
     istio: ingressgateway # use istio default controller
