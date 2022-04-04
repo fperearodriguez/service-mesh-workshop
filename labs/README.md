@@ -9,15 +9,15 @@ This repository contains the required tasks to install and configure Red Hat Ope
  - OC cli installed.
 
 ## Adding services to the mesh
-There are two ways for joining namespaces to the Service Mesh: SMMR and SMM.
-
-### Openshift Service Mesh member
+### Openshift Service Mesh Member
 Using this object, users who don't have privileges to add members to the *ServiceMeshMemberRoll* (e.g. users who can't access the Control Plane's namespace) can join their namespaces to the Service Mesh. But, these users need the *mesh-user* role.
 
 First, replace the User variables:
 ```bash
-OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
-sed -i "s/\$EXTERNAL_DOMAIN/$OCP_DOMAIN/g" $CURRENT_DIR/greeter-grpc/certs/cert.conf
+export OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
+export USER_NAMESPACE=$YOUR_USER
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\apps.fperod.cdd1.sandbox988.opentlc.com/$OCP_DOMAIN/g"
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\user1/user1/g"
 ```
 
 If you try to create the Service Mesh Member object, you will receive the following error:
@@ -77,4 +77,4 @@ Get the default ingress controller domain
 OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
 ```
 
-Replace the $EXTERNAL_DOMAIN variable in the [Gateway object](./config/3-ossm-networking/gw-ingress-http.yaml) and [OpenShift route object](./config/3-ossm-networking/route-bookinfo.yaml). Create Gateway and OpenShift route.
+Replace the apps.fperod.cdd1.sandbox988.opentlc.com variable in the [Gateway object](./config/3-ossm-networking/gw-ingress-http.yaml) and [OpenShift route object](./config/3-ossm-networking/route-bookinfo.yaml). Create Gateway and OpenShift route.

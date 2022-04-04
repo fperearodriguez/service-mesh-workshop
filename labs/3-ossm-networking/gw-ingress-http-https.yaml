@@ -12,7 +12,7 @@ spec:
       name: http2
       protocol: HTTP2
     hosts:
-    - '*.apps.$EXTERNAL_DOMAIN'
+    - '*.$EXTERNAL_DOMAIN'
   - port:
       number: 443
       name: https

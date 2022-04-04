@@ -10,17 +10,17 @@ OCP cluster configuration.
 
 Jaeger
 ```bash
-oc apply -f ./1-operators/jaeger-operator.yaml
+oc apply -f ./config/1-operators/jaeger-operator.yaml
 ```
 
 Kiali
 ```bash
-oc apply -f ./1-operators/kiali-operator.yaml
+oc apply -f ./config/1-operators/kiali-operator.yaml
 ```
 
 OSSM
 ```bash
-oc apply -f ./1-operators/ossm-operator.yaml
+oc apply -f ./config/1-operators/ossm-operator.yaml
 ```
 
 ```bash
@@ -33,7 +33,7 @@ servicemeshoperator.v2.1.1   Red Hat OpenShift Service Mesh                   2.
 ```
 
 ### Installing the Service Mesh Control Plane
-Now, the operators are installed and it is time to install the Service Mesh Control Plane with the configuration desired. For this, set the [SMCP Configuration](./2-ossm/basic.yaml) file up with your preferences and install it.
+Now, the operators are installed and it is time to install the Service Mesh Control Plane with the configuration desired. For this, set the [SMCP Configuration](./config/2-ossm/basic.yaml) file up with your preferences and install it.
 
 Create the istio-system namespace
 ```bash
@@ -42,7 +42,7 @@ oc new-project istio-system
 
 Install the Service Mesh Control Plane
 ```bash
-oc apply -f ./2-ossm/basic.yaml
+oc apply -f ./config/2-ossm/basic.yaml
 ```
 
 You can check the installation by executing
@@ -66,7 +66,7 @@ oc new-project my-awesome-project
 
 Create the SMMR
 ```bash
-oc apply -f ./2-ossm/smmr.yaml
+oc apply -f ./config/2-ossm/smmr.yaml
 ```
 
 A namespace called *my-awesome-project* exists in the OCP cluster and it will be joined to the Service Mesh:
@@ -78,8 +78,8 @@ default   1/1     Configured   5s
 ```
 
 ### Configuring OCP oauth
-Add the users to the file [Oauth File](././util/users.txt) and execute from the root path:
+Add the users to the file [Oauth File](./config/util/users.txt) and execute from the root path:
 ```bash
-./util/oauth.sh
+config/util/oauth.sh
 ```
 
