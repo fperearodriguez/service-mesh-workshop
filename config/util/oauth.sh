@@ -17,7 +17,8 @@ for user in $(cat $CURRENT_DIR/users.txt);do
   echo "Creating $user username"
   htpasswd -b -B $CURRENT_DIR/oauth/htpasswd $user $user
   oc adm policy add-cluster-role-to-user getingressdomain $user -n openshift-ingress-operator
-  oc adm new-project $user --display-name=$user --description=$user --admin=$user
+  oc adm new-project $user-front --display-name=$user-front --description=$user-front --admin=$user
+  oc adm new-project $user-back --display-name=$user-back --description=$user-back --admin=$user
 done
 
 echo "Creating HTPasswd Secret"

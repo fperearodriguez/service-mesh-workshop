@@ -24,18 +24,18 @@ First, replace the User variables:
 ```bash
 export OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
 export USER_NAMESPACE=$YOUR_USER
-find ./labs/ -type f -print0 | xargs -0 sed -i "s/\apps.fperod.cdd1.sandbox988.opentlc.com/$OCP_DOMAIN/g"
-find ./labs/ -type f -print0 | xargs -0 sed -i "s/\user1/user1/g"
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$EXTERNAL_DOMAIN/$OCP_DOMAIN/g"
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$USER_NAMESPACE/$USER_NAMESPACE/g"
 ```
 
 If you try to create the Service Mesh Member object, you will receive the following error:
 ```
-oc apply -f 2-ossm/smm.yaml
+oc apply -f ./labs/1-ossm-networking/smm-front.yaml
 ----
-Error from server: error when creating "2-ossm/smm.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
+Error from server: error when creating "./labs/1-ossm-networking/smm-front.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
 ```
 
-Grant user permissions to access the mesh by granting the *mesh-user* role:
+Grant user permissions to access the mesh by granting the *mesh-user* role: <mark> This command must be executed by the OSSM admins </mark>
 ```
 oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user ${USER_NAMESPACE}
 ```
@@ -55,34 +55,24 @@ Thus, the traffic will be balanced between the different MySQL instances.
 ### App diagram
 The traffic flow is:
 1. The sidecar intercept the request from the app container (ratings) to _mysql_.
-2. The Virtual Service and Destination Rule objects route the request from the sidecar (back) to the egress Gateway (istio-system).
+2. The Virtual Service and Destination Rule objects route the request from the sidecar ($user-back) to the egress Gateway (istio-system).
 3. At this point, the Virtual Service and Kubernetes Services objects resolve the endpoints and route the traffic through the egress Gateway.
 
 <img src="./full-application-flow.png" alt="Bookinfo app, front and back tiers" width=100%>
 
-### Deploying the MySQL instances
-<mark> This step is already done by the OSSM admins </mark><br/>
-As cluster-admin
+### Deploy the Bookinfo application  Namespaces (productpage=$user-front, reviews|ratings|details=$user-back)
+
+First, add the OCP projects to the Service Mesh:
 ```bash
-oc new-project ddbb
-oc create -n ddbb secret generic mysql-credentials-1 --from-env-file=./mysql-deploy/params.env
-oc create -n ddbb secret generic mysql-credentials-2 --from-env-file=./mysql-deploy/params-2.env
-oc create -n ddbb secret generic mysql-credentials-3 --from-env-file=./mysql-deploy/params-3.env
-oc process -f mysql-deploy/mysql-template.yaml --param-file=mysql-deploy/params.env | oc create -n ddbb -f -
-oc process -f mysql-deploy/mysql-template.yaml --param-file=mysql-deploy/params-2.env | oc create -n ddbb -f -
-oc process -f mysql-deploy/mysql-template.yaml --param-file=mysql-deploy/params-3.env | oc create -n ddbb -f -
+oc apply -n $USER_NAMESPACE-front -f 1-ossm-networking/smm-front.yaml
+oc apply -n $USER_NAMESPACE-back -f 1-ossm-networking/smm-back.yaml
 ```
-
-All the MySQL instances should be running in _ddbb_ project.
-
-### Deploy Custom Bookinfo application in separated Namespaces (productpage=front, reviews|ratings|details=back)
-
 #### Default OSSM networking
-First, create the Ingress Gateway and the OCP public route for the bookinfo application.
+Create the Istio Gateway for exposing the application outside the cluster.
 
-Get the default ingress controller domain
+Create the Istio Ingress Gateway
 ```bash
-OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
+oc apply -f ./labs/1-ossm-networking/gw-ingress-http-https.yaml
 ```
 
-Replace the apps.fperod.cdd1.sandbox988.opentlc.com variable in the [Gateway object](./config/3-ossm-networking/gw-ingress-http.yaml) and [OpenShift route object](./config/3-ossm-networking/route-bookinfo.yaml). Create Gateway and OpenShift route.
+#### Deploying the Bookinfo application

@@ -1,7 +1,7 @@
 apiVersion: maistra.io/v1
 kind: ServiceMeshMember
 metadata:
-  namespace: back
+  namespace: $USER_NAMESPACE-back
   name: default
 spec:
   controlPlaneRef:
