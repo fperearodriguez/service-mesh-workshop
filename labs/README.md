@@ -16,8 +16,8 @@ First, replace the User variables:
 ```bash
 export OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
 export USER_NAMESPACE=$YOUR_USER
-find ./labs/ -type f -print0 | xargs -0 sed -i "s/\apps.fperod.cdd1.sandbox988.opentlc.com/$OCP_DOMAIN/g"
-find ./labs/ -type f -print0 | xargs -0 sed -i "s/\user1/user1/g"
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$EXTERNAL_DOMAIN/$OCP_DOMAIN/g"
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$USER_NAMESPACE/user1/g"
 ```
 
 If you try to create the Service Mesh Member object, you will receive the following error:
@@ -56,10 +56,5 @@ The traffic flow is:
 
 #### Default OSSM networking
 First, create the Ingress Gateway and the OCP public route for the bookinfo application.
-
-Get the default ingress controller domain
-```bash
-OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
-```
 
 Replace the apps.fperod.cdd1.sandbox988.opentlc.com variable in the [Gateway object](./config/3-ossm-networking/gw-ingress-http.yaml) and [OpenShift route object](./config/3-ossm-networking/route-bookinfo.yaml). Create Gateway and OpenShift route.
