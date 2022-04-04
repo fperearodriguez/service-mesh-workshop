@@ -1,0 +1,111 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: bookinfo-mysql-template
+objects:
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      name: ratings
+      namespace: bookinfo
+      labels:
+        app: ratings
+        service: ratings
+    spec:
+      ports:
+      - port: 9080
+        name: http
+      selector:
+        app: ratings
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: bookinfo-ratings
+      namespace: bookinfo
+      labels:
+        account: ratings
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: ratings-v2-mysql
+    stringData:
+      db-type: ${DB_TYPE}
+      db-host: ${DB_HOST}
+      db-port: ${DB_PORT}
+      db-user: ${DB_USER}
+      db-password: ${DB_PASSWORD}
+  - apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: ratings-v2-mysql
+      labels:
+        app: ratings
+        version: v2-mysql
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: ratings
+          version: v2-mysql
+      template:
+        metadata:
+          annotations:
+            sidecar.istio.io/inject: "true"
+          labels:
+            app: ratings
+            version: v2-mysql
+        spec:
+          serviceAccountName: bookinfo-ratings
+          containers:
+          - name: ratings
+            image: quay.io/fperea_rh/bookinfo-ratings:1.16.2-v2
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: DB_TYPE
+                valueFrom:
+                  secretKeyRef:
+                    key: db-type
+                    name: ratings-v2-mysql
+              - name: MYSQL_DB_HOST
+                valueFrom:
+                  secretKeyRef:
+                    key: db-host
+                    name: ratings-v2-mysql
+              - name: MYSQL_DB_PORT
+                valueFrom:
+                  secretKeyRef:
+                    key: db-port
+                    name: ratings-v2-mysql
+              - name: MYSQL_DB_USER
+                valueFrom:
+                  secretKeyRef:
+                    key: db-user
+                    name: ratings-v2-mysql
+              - name: MYSQL_DB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: db-password
+                    name: ratings-v2-mysql
+            ports:
+            - containerPort: 9080
+parameters:
+  - description: DDBB type to use
+    displayName: DB type
+    name: DB_TYPE
+    required: true
+  - description: DDBB hostname
+    displayName: DB hostname
+    name: DB_HOST
+    required: true
+  - description: DDBB port
+    displayName: DB port
+    name: DB_PORT
+    required: true
+  - description: DDBB username
+    displayName: DB Username
+    name: DB_USER
+    required: true
+  - description: DDBB password
+    displayName: DB password
+    name: DB_PASSWORD
+    required: true

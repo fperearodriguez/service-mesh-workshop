@@ -1,0 +1,185 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: mysql-template
+objects:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: ${DATABASE_SERVICE_NAME}
+      namespace: ${NAMESPACE}
+    stringData:
+      database-name: ${MYSQL_DATABASE}
+      database-password: ${MYSQL_BOOKPASSWORD}
+      database-root-password: ${MYSQL_PASSWORD}
+      database-user: ${MYSQL_USER}
+      database-bookuser: ${MYSQL_BOOKUSER}
+      database-bookpassword: ${MYSQL_BOOKPASSWORD}
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        template.openshift.io/expose-uri: mysql://{.spec.clusterIP}:{.spec.ports[?(.name=="mysql")].port}
+      name: ${DATABASE_SERVICE_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      ports:
+      - name: mysql
+        port: 3306
+      selector:
+        name: ${DATABASE_SERVICE_NAME}
+  # - apiVersion: v1
+  #   kind: PersistentVolumeClaim
+  #   metadata:
+  #     name: ${DATABASE_SERVICE_NAME}
+  #     namespace: ${NAMESPACE}
+  #   spec:
+  #     accessModes:
+  #     - ReadWriteOnce
+  #     resources:
+  #       requests:
+  #         storage: ${VOLUME_CAPACITY}
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      annotations:
+        template.alpha.openshift.io/wait-for-ready: "true"
+      name: ${DATABASE_SERVICE_NAME}
+      namespace: ${NAMESPACE}
+    spec:
+      replicas: 1
+      selector:
+        name: ${DATABASE_SERVICE_NAME}
+      strategy:
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            name: ${DATABASE_SERVICE_NAME}
+        spec:
+          containers:
+          - env:
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  key: database-user
+                  name: ${DATABASE_SERVICE_NAME}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: database-password
+                  name: ${DATABASE_SERVICE_NAME}
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: database-root-password
+                  name: ${DATABASE_SERVICE_NAME}
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  key: database-name
+                  name: ${DATABASE_SERVICE_NAME}
+            - name: MYSQL_BOOKUSER
+              valueFrom:
+                secretKeyRef:
+                  key: database-bookuser
+                  name: ${DATABASE_SERVICE_NAME}
+            - name: MYSQL_BOOKPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: database-bookpassword
+                  name: ${DATABASE_SERVICE_NAME}
+            image: ${IMAGE_NAME}:${IMAGE_VERSION}
+            imagePullPolicy: IfNotPresent
+            livenessProbe:
+              exec:
+                command:
+                - /bin/sh
+                - -i
+                - -c
+                - MYSQL_PWD="$MYSQL_PASSWORD" mysqladmin -u $MYSQL_USER ping
+              initialDelaySeconds: 30
+              timeoutSeconds: 1
+            name: mysql
+            ports:
+            - containerPort: 3306
+            readinessProbe:
+              exec:
+                command:
+                - /bin/sh
+                - -i
+                - -c
+                - MYSQL_PWD="$MYSQL_PASSWORD" mysqladmin -u $MYSQL_USER ping
+              initialDelaySeconds: 5
+              timeoutSeconds: 1
+            resources:
+              limits:
+                memory: ${MEMORY_LIMIT}
+          #   volumeMounts:
+          #   - mountPath: /var/lib/mysql/data
+          #     name: ${DATABASE_SERVICE_NAME}-data
+          # volumes:
+          # - name: ${DATABASE_SERVICE_NAME}-data
+          #   persistentVolumeClaim:
+          #     claimName: ${DATABASE_SERVICE_NAME}
+parameters:
+  - description: Maximum amount of memory the container can use.
+    displayName: Memory Limit
+    name: MEMORY_LIMIT
+    required: true
+  - description: The OpenShift Namespace where the ImageStream resides.
+    displayName: Image's Namespace
+    name: IMAGE_NAMESPACE
+  - description: The OpenShift Namespace where the objects will be created.
+    displayName: App Namespace
+    name: NAMESPACE
+  - description: The name of the OpenShift Service exposed for the database.
+    displayName: Database Service Name
+    name: DATABASE_SERVICE_NAME
+    required: true
+  - description: Username for MySQL user that will be used for accessing the database.
+    displayName: MySQL Connection Username
+    from: user[A-Z0-9]{3}
+    generate: expression
+    name: MYSQL_USER
+    required: true
+  - description: Password for the MySQL connection user.
+    displayName: MySQL Connection Password
+    from: '[a-zA-Z0-9]{16}'
+    generate: expression
+    name: MYSQL_PASSWORD
+    required: true
+  - description: Password for the MySQL root user.
+    displayName: MySQL Connection Password
+    from: '[a-zA-Z0-9]{16}'
+    generate: expression
+    name: MYSQL_ROOT_PASSWORD
+    required: true
+  - description: Username for MySQL user that will be used for accessing the database.
+    displayName: MySQL Connection Username
+    from: user[A-Z0-9]{3}
+    generate: expression
+    name: MYSQL_BOOKUSER
+    required: true
+  - description: Password for the MySQL root user.
+    displayName: MySQL root user Password
+    from: '[a-zA-Z0-9]{16}'
+    generate: expression
+    name: MYSQL_BOOKPASSWORD
+    required: true
+  - description: Name of the MySQL database accessed.
+    displayName: MySQL Database Name
+    name: MYSQL_DATABASE
+    required: true
+  - description: Volume space available for data, e.g. 512Mi, 2Gi.
+    displayName: Volume Capacity
+    name: VOLUME_CAPACITY
+    required: true
+  - description: Name of MySQL image to be used (8.0-el7, 8.0-el8, or latest).
+    displayName: Name of MySQL Image
+    name: IMAGE_NAME
+    required: true
+  - description: Version of MySQL image to be used (8.0-el7, 8.0-el8, or latest).
+    displayName: Version of MySQL Image
+    name: IMAGE_VERSION
+    required: true

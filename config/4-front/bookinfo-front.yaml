@@ -1,0 +1,66 @@
+##################################################################################################
+# Productpage services
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: productpage
+  labels:
+    app: productpage
+    service: productpage
+spec:
+  ports:
+  - port: 9080
+    name: http
+  selector:
+    app: productpage
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bookinfo-productpage
+  labels:
+    account: productpage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: productpage-v1
+  labels:
+    app: productpage
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: productpage
+      version: v1
+  template:
+    metadata:
+      #annotations:
+      #  sidecar.istio.io/inject: "true"
+      labels:
+        app: productpage
+        version: v1
+    spec:
+      serviceAccountName: bookinfo-productpage
+      containers:
+      - name: productpage
+        image: quay.io/fperea_rh/bookinfo-productpage:2.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9080
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        env:
+        - name: REVIEWS_HOSTNAME
+          value: reviews.back.svc.cluster.local
+        - name: DETAILS_HOSTNAME
+          value: details.back.svc.cluster.local
+        - name: RATINGS_HOSTNAME
+          value: ratings.back.svc.cluster.local
+      volumes:
+      - name: tmp
+        emptyDir: {}
+---

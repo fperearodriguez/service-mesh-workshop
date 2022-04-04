@@ -1,0 +1,11 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: egress-mysql
+  namespace: istio-system
+spec:
+  host: mysql.istio-system.svc.cluster.local
+  exportTo:
+    - .
+  subsets:
+  - name: v2-mysql

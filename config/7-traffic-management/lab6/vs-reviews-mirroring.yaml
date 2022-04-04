@@ -1,0 +1,44 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  exportTo:
+  - back
+  - front
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+      weight: 100
+    mirror:
+      host: reviews
+      subset: v2
+    mirrorPercentage:
+      value: 10.0
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews
+  exportTo:
+  - back
+  - front
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v3
+    labels:
+      version: v3

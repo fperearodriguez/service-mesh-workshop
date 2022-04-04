@@ -1,0 +1,24 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: ingress-gateway
+  namespace: $USER_NAMESPACE
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http2
+      protocol: HTTP2
+    hosts:
+    - '*.apps.$EXTERNAL_DOMAIN'
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    hosts:
+    - '*.secure.$EXTERNAL_DOMAIN'
+    tls:
+      credentialName: ingress-gateway-certs
+      mode: MUTUAL

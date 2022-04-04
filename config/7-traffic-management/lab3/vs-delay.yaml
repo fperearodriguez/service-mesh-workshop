@@ -1,0 +1,44 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  hosts:
+  - reviews
+  exportTo:
+  - back
+  - front
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v2
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ratings
+spec:
+  hosts:
+  - ratings
+  exportTo:
+  - back
+  - front
+  http:
+  - match:
+    - headers:
+        end-user:
+          exact: test-user
+    fault:
+      delay:
+        percentage:
+          value: 100.0
+        fixedDelay: 7s
+    route:
+    - destination:
+        host: ratings
+        subset: v2-mysql
+  - route:
+    - destination:
+        host: ratings
+        subset: v2-mysql
