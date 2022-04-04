@@ -1,12 +1,20 @@
 # Service Mesh Workshop
 
-Repository to store the Service Mesh Workshop for Iberia Customer Success Meetup on April 6
-
-This repository contains the required tasks to install and configure Red Hat OpenShift Service Mesh in a OCP cluster, and deploy an example application.
+This README contains the instructions for the Service Mesh Workshop for the Iberia Customer Success Meeting. If you are participating live, please refer to the facilitators for instructions on how to use the cluster that is going to be provided. If you are doing this on your own, kindly follow the prerequisites and go to the `config` folder before starting this workshop.
 
 ## Prerequisites
  - OCP cluster up and running with version 4.6 or higher.
+ - OpenShift Service Mesh installed
  - OC cli installed.
+
+ ## Download the workshop files
+
+ First of all, download the workshop files:
+
+ ```bash
+ git clone ssh://git@gitlab.consulting.redhat.com:2222/iberia-consulting/training-and-enablement/meetups/service-mesh-workshop.git
+ cd service-mesh-workshop
+ ```
 
 ## Adding services to the mesh
 ### Openshift Service Mesh Member
@@ -22,14 +30,14 @@ find ./labs/ -type f -print0 | xargs -0 sed -i "s/\user1/user1/g"
 
 If you try to create the Service Mesh Member object, you will receive the following error:
 ```
-oc apply -f config/2-ossm/smm.yaml
+oc apply -f 2-ossm/smm.yaml
 ----
-Error from server: error when creating "config/2-ossm/smm.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
+Error from server: error when creating "2-ossm/smm.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
 ```
 
 Grant user permissions to access the mesh by granting the *mesh-user* role:
 ```
-oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user $user
+oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user ${USER_NAMESPACE}
 ```
 
 This use case will be use in the application deployment step with your user.
@@ -50,7 +58,7 @@ The traffic flow is:
 2. The Virtual Service and Destination Rule objects route the request from the sidecar (back) to the egress Gateway (istio-system).
 3. At this point, the Virtual Service and Kubernetes Services objects resolve the endpoints and route the traffic through the egress Gateway.
 
-<img src="./config/full-application-flow.png" alt="Bookinfo app, front and back tiers" width=100%>
+<img src="./full-application-flow.png" alt="Bookinfo app, front and back tiers" width=100%>
 
 ### Deploying the MySQL instances
 <mark> This step is already done by the OSSM admins </mark><br/>
