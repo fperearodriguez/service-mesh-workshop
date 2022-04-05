@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: ratings-to-egress
-  namespace: back
+  namespace: $USER_NAMESPACE-back
 spec:
   exportTo:
   - .
@@ -11,7 +11,7 @@ spec:
   - name: mysql-external
     trafficPolicy:
       loadBalancer:
-        simple: ROUND_ROBIN
+        simple: RANDOM
       portLevelSettings:
       - port:
           number: 443

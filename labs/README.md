@@ -26,23 +26,18 @@ Using this object, users who don't have privileges to add members to the _Servic
 First, replace the User variables:
 
 ```bash
-export OCP_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
+export EXTERNAL_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
 export USER_NAMESPACE=$(oc whoami)
-find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$EXTERNAL_DOMAIN/$OCP_DOMAIN/g"
+export MYSQL_CLUSTER_IP=$(oc get svc mysql -n istio-system -o json | jq -r '.spec.clusterIP')
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$EXTERNAL_DOMAIN/$EXTERNAL_DOMAIN/g"
 find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$USER_NAMESPACE/$USER_NAMESPACE/g"
-```
-
-Create your projects:
-
-```bash
-oc new-project $USER_NAMESPACE-back
-oc new-project $USER_NAMESPACE-front
+find ./labs/4-ratings-egress/ -type f -print0 | xargs -0 sed -i "s/\$MYSQL_CLUSTER_IP/$MYSQL_CLUSTER_IP/g"
 ```
 
 If you try to create the Service Mesh Member object, you will receive the following error:
 
 ```
-oc apply -f ./labs/1-ossm-networking/smm-front.yaml
+oc apply -n user1-front -f ./labs/1-ossm-networking/smm-front.yaml
 ----
 Error from server: error when creating "./labs/1-ossm-networking/smm-front.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
 ```
@@ -50,10 +45,17 @@ Error from server: error when creating "./labs/1-ossm-networking/smm-front.yaml"
 Grant user permissions to access the mesh by granting the _mesh-user_ role: <mark> This command must be executed by the OSSM admins </mark>
 
 ```
-oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user $USER_NAMESPACE
+oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user user1
 ```
 
 This use case will be use in the application deployment step with your user.
+
+### Create TLS certificates
+Create the TLS certificates to use mTLS between the client and the Istio Ingress Gateway:
+```bash
+labs/0-certs/certs.sh
+oc create secret generic user1-ingress-gateway-certs -n istio-system --from-file=tls.crt=./labs/0-certs/server.pem --from-file=tls.key=./labs/0-certs/server.key --from-file=ca.crt=./labs/0-certs/ca.pem
+```
 
 ## Deploying the bookinfo example application
 
@@ -82,8 +84,8 @@ The traffic flow is:
 First, add the OCP projects to the Service Mesh:
 
 ```bash
-oc apply -n $USER_NAMESPACE-front -f ./labs/1-ossm-networking/smm-front.yaml
-oc apply -n $USER_NAMESPACE-back -f ./labs/1-ossm-networking/smm-back.yaml
+oc apply -n user1-front -f ./labs/1-ossm-networking/smm-front.yaml
+oc apply -n user1-back -f ./labs/1-ossm-networking/smm-back.yaml
 ```
 
 #### Default OSSM networking
@@ -96,16 +98,28 @@ Create the Istio Ingress Gateway
 oc apply -f ./labs/1-ossm-networking/gw-ingress-http-https.yaml
 ```
 
+The Bookinfo application will be exposed in the public route user1.$EXTERNAL_DOMAIN.
+
 #### Deploying the Bookinfo application
 
 Let's deploy the front-end of the application, the virtual service and the destination rule of the same:
 
 ```bash
-oc apply -f ./labs/2-front/ -n $USER_NAMESPACE-front
+oc apply -f ./labs/2-front/ -n user1-front
 ```
 
 But for the frontend to work, we need to deploy also the backend of the application:
 
 ```bash
-oc apply -f ./labs/3-back/ -n $USER_NAMESPACE-back
+oc apply -f ./labs/3-back/ -n user1-back
+oc process -f ./labs/3-back/bookinfo-ratings-mysql.yaml --param-file=./labs/3-back/params.env | oc apply -n $USER_NAMESPACE-back -f -
 ```
+
+#### Create the Istio objects to reach the external database
+Route the traffic from _ratings_ to the  egress gateway located in _istio-system_ namespace.
+```bash
+oc apply -n $USER_NAMESPACE-back -f ./labs/4-ratings-egress/dr-ratings-egress.yaml
+oc apply -n $USER_NAMESPACE-back -f ./labs/4-ratings-egress/vs-ratings-egress.yaml
+```
+
+At this point, the application will be accesible tr

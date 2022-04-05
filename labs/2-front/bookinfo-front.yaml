@@ -55,11 +55,11 @@ spec:
           mountPath: /tmp
         env:
         - name: REVIEWS_HOSTNAME
-          value: reviews.back.svc.cluster.local
+          value: reviews.$USER_NAMESPACE-back.svc.cluster.local
         - name: DETAILS_HOSTNAME
-          value: details.back.svc.cluster.local
+          value: details.$USER_NAMESPACE-back.svc.cluster.local
         - name: RATINGS_HOSTNAME
-          value: ratings.back.svc.cluster.local
+          value: ratings.$USER_NAMESPACE-back.svc.cluster.local
       volumes:
       - name: tmp
         emptyDir: {}

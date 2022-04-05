@@ -1,8 +1,8 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: ratings-egress
-  namespace: back
+  name: ratings-to-egress
+  namespace: $USER_NAMESPACE-back
 spec:
   exportTo:
   - .
@@ -17,7 +17,7 @@ spec:
         app: ratings
         version: v2-mysql
       destinationSubnets:
-      - 172.30.131.39
+      - 172.30.177.183
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local

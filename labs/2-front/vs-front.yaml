@@ -4,10 +4,13 @@ metadata:
   name: bookinfo
 spec:
   hosts:
-  - bookinfo.insecure.$OCP_DOMAIN
-  - bookinfo.secure.$OCP_DOMAIN
+  - bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN
+  - bookinfo-$USER_NAMESPACE.secure.$EXTERNAL_DOMAIN
   gateways:
-  - istio-system/ingress-gateway
+  - $USER_NAMESPACE-front/$USER_NAMESPACE-ingress-gateway
+  exportTo:
+    - istio-system
+    - $USER_NAMESPACE-front
   http:
   - match:
     - uri:
