@@ -2,6 +2,14 @@
 
 set -e
 CURRENT_DIR=$(pwd)
+OCP_API_SERVER=$1
+
+if [ -z "$1" ]
+then
+    echo "ERROR: No OCP Api Server indicated as argument"
+    echo "Usage: config/util/test-users.sh https://API_SERVER:6443"
+    exit 1
+fi
 
 check_pod() {
     POD=$1
@@ -20,7 +28,7 @@ check_pod() {
 for user in $(cat $CURRENT_DIR/config/util/users.txt);do
     echo "-- Testing User $user --"
     sleep 1
-    oc login -u $user -p $user --server=https://api.fperod.cdd1.sandbox988.opentlc.com:6443
+    oc login -u $user -p $user --server=$OCP_API_SERVER
     export EXTERNAL_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
     export USER_NAMESPACE=$(oc whoami)
     export MYSQL_CLUSTER_IP=$(oc get svc mysql -n istio-system -o json | jq -r '.spec.clusterIP')
@@ -71,6 +79,7 @@ for user in $(cat $CURRENT_DIR/config/util/users.txt);do
     find ./labs/4-ratings-egress/ -type f -print0 | xargs -0 sed -i "s/$MYSQL_CLUSTER_IP/\$MYSQL_CLUSTER_IP/g"
     find ./labs/0-certs/ -type f -print0 | xargs -0 sed -i "s/$HOSTNAME/\$HOSTNAME/g"
     echo "User $user done..."
+    echo " "
     sleep 1
 done
 
