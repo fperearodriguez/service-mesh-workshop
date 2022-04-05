@@ -1,7 +1,14 @@
 #!/bin/bash
 
-CURRENT_DIR=$(pwd)/config/util
 set -e
+
+CURRENT_DIR=$(pwd)/config/util
+
+for user in $(cat $CURRENT_DIR/users.txt);do
+  echo "Deleting roles from user $user"
+  oc adm policy remove-user $user -n openshift-ingress-operator
+  oc adm policy remove-user $user -n istio-system
+done
 
 echo "Creating htpasswd file"
 rm -f $CURRENT_DIR/oauth/htpasswd
@@ -30,10 +37,7 @@ EOF_IP
 oc apply -f $CURRENT_DIR/oauth/cluster-oauth.yaml
 
 for user in $(cat $CURRENT_DIR/users.txt);do
-  echo "Deleting roles from user $user"
-  oc adm policy remove-role-from-user getingressdomain $user --role-namespace=openshift-ingress-operator -n openshift-ingress-operator
-  oc adm policy remove-cluster-role-from-user view $user -n istio-system
-  oc adm policy remove-role-from-user createsdssecrets $user --role-namespace=istio-system -n istio-system
+  echo "Deleting projects from user $user"
   oc delete project $user-front
   oc delete project $user-back
 done
@@ -41,6 +45,7 @@ done
 echo "Deleting role"
 oc delete -n openshift-ingress-operator -f ./config/util/role-getingressdomain.yaml --ignore-not-found=true
 oc delete -n istio-system -f ./config/util/role-createsdssecrets.yaml --ignore-not-found=true
+oc delete -n istio-system -f ./config/util/role-getsvcandroute.yaml --ignore-not-found=true
 
 echo "Giving cluster-admin role to admin user"
 oc adm policy add-cluster-role-to-user cluster-admin admin

@@ -6,8 +6,10 @@ metadata:
 rules:
 - apiGroups:
   - ""
+  - "route.openshift.io"
   resources:
   - services
-  - routes.route.openshift.io
+  - routes
   verbs:
   - get
+  - list
