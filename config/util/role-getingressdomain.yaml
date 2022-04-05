@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: "2022-04-05T09:23:18Z"
+  managedFields:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:rules: {}
+    manager: kubectl-create
+    operation: Update
+    time: "2022-04-05T09:23:18Z"
+  name: getingressdomain
+  namespace: openshift-ingress-operator
+  resourceVersion: "356389"
+  uid: f5aa12f3-327c-468b-8229-22bb3a72575f
+rules:
+- apiGroups:
+  - operator.openshift.io
+  resources:
+  - ingresscontrollers
+  verbs:
+  - get
