@@ -2,12 +2,9 @@
 
 CURRENT_DIR=$(pwd)/config/util
 
-echo "Exporting admin TLS credentials..."
-export KUBECONFIG=$HOME/.kube/config_otlc
-
 echo "Creating cluster role"
-oc create role getingressdomain --verb=get --resource=ingresscontrollers.operator.openshift.io -n openshift-ingress-operator
-oc create role createsdssecret --verb=create --resource=secrets -n istio-system
+oc apply -n openshift-ingress-operator -f ./config/util/role-getingressdomain.yaml
+oc apply -n istio-system -f ./config/util/role-createsdssecrets.yaml
 
 echo "Creating htpasswd file"
 rm -f $CURRENT_DIR/oauth/htpasswd
