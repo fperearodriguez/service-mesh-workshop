@@ -4,16 +4,16 @@ metadata:
   name: reviews
 spec:
   hosts:
-  - reviews.back.svc.cluster.local
+  - reviews
   exportTo:
-  - back
-  - front
+  - $USER_NAMESPACE-back
+  - $USER_NAMESPACE-front
   gateways:
   - mesh
   http:
   - route:
     - destination:
-        host: reviews.back.svc.cluster.local
+        host: reviews
         subset: v3
 ---
 apiVersion: networking.istio.io/v1alpha3
@@ -24,8 +24,8 @@ spec:
   hosts:
   - ratings
   exportTo:
-  - back
-  - front
+  - $USER_NAMESPACE-back
+  - $USER_NAMESPACE-front
   gateways:
   - mesh
   http:
@@ -41,15 +41,15 @@ metadata:
   name: details
 spec:
   hosts:
-  - details.back.svc.cluster.local
+  - details
   exportTo:
-  - back
-  - front
+  - $USER_NAMESPACE-back
+  - $USER_NAMESPACE-front
   gateways:
   - mesh
   http:
   - route:
     - destination:
-        host: details.back.svc.cluster.local
+        host: details
         subset: v1
 ---

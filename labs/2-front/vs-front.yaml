@@ -4,7 +4,8 @@ metadata:
   name: bookinfo
 spec:
   hosts:
-  - bookinfo.apps.fperod.ad70.sandbox726.opentlc.com
+  - bookinfo.insecure.$OCP_DOMAIN
+  - bookinfo.secure.$OCP_DOMAIN
   gateways:
   - istio-system/ingress-gateway
   http:
@@ -21,7 +22,7 @@ spec:
         prefix: /api/v1/products
     route:
     - destination:
-        host: productpage.front.svc.cluster.local
+        host: productpage
         port:
           number: 9080
         subset: v1

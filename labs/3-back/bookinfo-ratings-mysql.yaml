@@ -7,7 +7,7 @@ objects:
     kind: Service
     metadata:
       name: ratings
-      namespace: bookinfo
+      namespace: $USER_NAMESPACE-back
       labels:
         app: ratings
         service: ratings
@@ -21,7 +21,7 @@ objects:
     kind: ServiceAccount
     metadata:
       name: bookinfo-ratings
-      namespace: bookinfo
+      namespace: $USER_NAMESPACE-back
       labels:
         account: ratings
   - apiVersion: v1
@@ -38,6 +38,7 @@ objects:
     kind: Deployment
     metadata:
       name: ratings-v2-mysql
+      namespace: $USER_NAMESPACE-back
       labels:
         app: ratings
         version: v2-mysql

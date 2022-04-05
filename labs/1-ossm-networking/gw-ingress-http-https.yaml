@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: ingress-gateway
-  namespace: $USER_NAMESPACE-front
+  namespace: istio-system
 spec:
   selector:
     istio: ingressgateway # use istio default controller
@@ -12,7 +12,7 @@ spec:
       name: http2
       protocol: HTTP2
     hosts:
-    - '*.$EXTERNAL_DOMAIN'
+    - '*.insecure.$EXTERNAL_DOMAIN'
   - port:
       number: 443
       name: https
