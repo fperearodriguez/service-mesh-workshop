@@ -6,8 +6,8 @@ spec:
   hosts:
   - ratings
   exportTo:
-  - back
-  - front
+  - $USER_NAMESPACE-back
+  - $USER_NAMESPACE-front
   gateways:
   - mesh
   http:
@@ -22,6 +22,9 @@ metadata:
   name: ratings
 spec:
   host: ratings
+  exportTo:
+  - $USER_NAMESPACE-back
+  - $USER_NAMESPACE-front
   subsets:
   - name: v1
     labels:
