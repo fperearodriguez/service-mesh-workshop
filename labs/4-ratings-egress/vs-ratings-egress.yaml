@@ -17,7 +17,7 @@ spec:
         app: ratings
         version: v2-mysql
       destinationSubnets:
-      - 172.30.177.183
+      - $MYSQL_CLUSTER_IP
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
