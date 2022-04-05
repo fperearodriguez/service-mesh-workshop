@@ -19,11 +19,6 @@ htpasswd -c -b -B $CURRENT_DIR/oauth/htpasswd admin redhat
 for user in $(cat $CURRENT_DIR/users.txt);do
   echo "Creating $user username"
   htpasswd -b -B $CURRENT_DIR/oauth/htpasswd $user $user
-  oc adm policy add-role-to-user getingressdomain $user --role-namespace=openshift-ingress-operator -n openshift-ingress-operator
-  oc adm policy add-cluster-role-to-user view $user -n istio-system
-  oc adm policy add-role-to-user createsdssecrets $user --role-namespace=istio-system -n istio-system
-  oc adm new-project $user-front --display-name=$user-front --description=$user-front --admin=$user
-  oc adm new-project $user-back --display-name=$user-back --description=$user-back --admin=$user
 done
 
 echo "Creating HTPasswd Secret"
@@ -46,6 +41,15 @@ spec:
         name: htpass-secret
 EOF_IP
 oc apply -f $CURRENT_DIR/oauth/cluster-oauth.yaml
+
+for user in $(cat $CURRENT_DIR/users.txt);do
+  echo "Adding roles to user $user"
+  oc adm policy add-role-to-user getingressdomain $user --role-namespace=openshift-ingress-operator -n openshift-ingress-operator
+  oc adm policy add-cluster-role-to-user view $user -n istio-system
+  oc adm policy add-role-to-user createsdssecrets $user --role-namespace=istio-system -n istio-system
+  oc adm new-project $user-front --display-name=$user-front --description=$user-front --admin=$user
+  oc adm new-project $user-back --display-name=$user-back --description=$user-back --admin=$user
+done
 
 echo "Giving cluster-admin role to admin user"
 oc adm policy add-cluster-role-to-user cluster-admin admin
