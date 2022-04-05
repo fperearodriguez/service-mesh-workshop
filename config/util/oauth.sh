@@ -6,7 +6,8 @@ echo "Exporting admin TLS credentials..."
 export KUBECONFIG=$HOME/.kube/config_otlc
 
 echo "Creating cluster role"
-oc create clusterrole getingressdomain --verb=get --resource=ingresscontrollers.operator.openshift.io 
+oc create role getingressdomain --verb=get --resource=ingresscontrollers.operator.openshift.io -n openshift-ingress-operator
+oc create role createsdssecret --verb=create --resource=secrets -n istio-system
 
 echo "Creating htpasswd file"
 rm -f $CURRENT_DIR/oauth/htpasswd
@@ -16,7 +17,9 @@ htpasswd -c -b -B $CURRENT_DIR/oauth/htpasswd admin redhat
 for user in $(cat $CURRENT_DIR/users.txt);do
   echo "Creating $user username"
   htpasswd -b -B $CURRENT_DIR/oauth/htpasswd $user $user
-  oc adm policy add-cluster-role-to-user getingressdomain $user -n openshift-ingress-operator
+  oc adm policy add-role-to-user getingressdomain $user --role-namespace=openshift-ingress-operator -n openshift-ingress-operator
+  oc adm policy add-cluster-role-to-user view $user -n istio-system
+  oc adm policy add-role-to-user createsdssecrets $user --role-namespace=istio-system -n istio-system
   oc adm new-project $user-front --display-name=$user-front --description=$user-front --admin=$user
   oc adm new-project $user-back --display-name=$user-back --description=$user-back --admin=$user
 done

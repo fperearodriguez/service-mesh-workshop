@@ -84,16 +84,22 @@ config/util/oauth.sh
 ```
 
 ### Deploying the MySQL instances
-<mark> This step is already done by the OSSM admins </mark><br/>
-As cluster-admin
+As cluster-admin:
 ```bash
 oc new-project ddbb
-oc create -n ddbb secret generic mysql-credentials-1 --from-env-file=./config/mysql-deploy/params.env
-oc create -n ddbb secret generic mysql-credentials-2 --from-env-file=./config/mysql-deploy/params-2.env
-oc create -n ddbb secret generic mysql-credentials-3 --from-env-file=./config/mysql-deploy/params-3.env
-oc process -f ./config/mysql-deploy/mysql-template.yaml --param-file=./config/mysql-deploy/params.env | oc create -n ddbb -f -
-oc process -f ./config/mysql-deploy/mysql-template.yaml --param-file=./config/mysql-deploy/params-2.env | oc create -n ddbb -f -
-oc process -f ./config/mysql-deploy/mysql-template.yaml --param-file=./config/mysql-deploy/params-3.env | oc create -n ddbb -f -
+oc create -n ddbb secret generic mysql-credentials-1 --from-env-file=./config/3-mysql-deploy/params.env
+oc create -n ddbb secret generic mysql-credentials-2 --from-env-file=./config/3-mysql-deploy/params-2.env
+oc create -n ddbb secret generic mysql-credentials-3 --from-env-file=./config/3-mysql-deploy/params-3.env
+oc process -f ./config/3-mysql-deploy/mysql-template.yaml --param-file=./config/3-mysql-deploy/params.env | oc create -n ddbb -f -
+oc process -f ./config/3-mysql-deploy/mysql-template.yaml --param-file=./config/3-mysql-deploy/params-2.env | oc create -n ddbb -f -
+oc process -f ./config/3-mysql-deploy/mysql-template.yaml --param-file=./config/3-mysql-deploy/params-3.env | oc create -n ddbb -f -
+oc create -n istio-system -f ./config/3-mysql-deploy/svc-mysql.yaml
 ```
 
 All the MySQL instances should be running in _ddbb_ project.
+
+### Create the Istio objects to route the traffic from the Egress Gateway to the external Mysql databases
+As cluster-admin:
+```bash
+oc create -n istio-system -f ./config/4-istio-system-egress/
+```
