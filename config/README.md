@@ -96,3 +96,9 @@ As cluster-admin:
 ```bash
 oc create -n istio-system -f ./config/4-istio-system-egress/
 ```
+
+### Simulate users
+To simulate real users generating objects and traffic in the OCP cluster:
+```bash
+config/util/test-users.sh
+```
