@@ -1,11 +1,7 @@
 #!/bin/bash
-export KUBECONFIG="/home/fperea/.kube/config_otlc"
+
 CURRENT_DIR=$(pwd)/config/util
 set -e
-
-echo "Deleting role"
-oc delete -n openshift-ingress-operator -f ./config/util/role-getingressdomain.yaml --ignore-not-found=true
-oc delete -n istio-system -f ./config/util/role-createsdssecrets.yaml --ignore-not-found=true
 
 echo "Creating htpasswd file"
 rm -f $CURRENT_DIR/oauth/htpasswd
@@ -41,6 +37,10 @@ for user in $(cat $CURRENT_DIR/users.txt);do
   oc delete project $user-front
   oc delete project $user-back
 done
+
+echo "Deleting role"
+oc delete -n openshift-ingress-operator -f ./config/util/role-getingressdomain.yaml --ignore-not-found=true
+oc delete -n istio-system -f ./config/util/role-createsdssecrets.yaml --ignore-not-found=true
 
 echo "Giving cluster-admin role to admin user"
 oc adm policy add-cluster-role-to-user cluster-admin admin

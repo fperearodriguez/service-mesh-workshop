@@ -4,9 +4,10 @@ set -e
 
 CURRENT_DIR=$(pwd)/config/util
 
-echo "Creating cluster role"
+echo "Creating roles"
 oc apply -n openshift-ingress-operator -f ./config/util/role-getingressdomain.yaml
 oc apply -n istio-system -f ./config/util/role-createsdssecrets.yaml
+oc apply -n istio-system -f ./config/util/role-getsvcandroute.yaml
 
 echo "Creating htpasswd file"
 rm -f $CURRENT_DIR/oauth/htpasswd
@@ -42,8 +43,8 @@ oc apply -f $CURRENT_DIR/oauth/cluster-oauth.yaml
 for user in $(cat $CURRENT_DIR/users.txt);do
   echo "Adding roles to user $user"
   oc adm policy add-role-to-user getingressdomain $user --role-namespace=openshift-ingress-operator -n openshift-ingress-operator
-  oc adm policy add-cluster-role-to-user view $user -n istio-system
   oc adm policy add-role-to-user createsdssecrets $user --role-namespace=istio-system -n istio-system
+  oc adm policy add-role-to-user getsvcandroute $user --role-namespace=istio-system -n istio-system
   oc adm new-project $user-front --display-name=$user-front --description=$user-front --admin=$user
   oc adm new-project $user-back --display-name=$user-back --description=$user-back --admin=$user
 done
