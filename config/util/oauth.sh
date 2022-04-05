@@ -1,9 +1,11 @@
 #!/bin/bash
 
+set -e
+
 CURRENT_DIR=$(pwd)/config/util
 
-echo "Exporting admin TLS credentials..."
-export KUBECONFIG=$HOME/.kube/config_otlc
+# echo "Exporting admin TLS credentials..."
+# export KUBECONFIG=$HOME/.kube/config_otlc
 
 echo "Creating cluster role"
 oc create role getingressdomain --verb=get --resource=ingresscontrollers.operator.openshift.io -n openshift-ingress-operator
