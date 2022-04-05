@@ -6,10 +6,10 @@ rm -f *.pem
 
 echo "Create CA"
 ## generate rootca private key
-openssl genrsa  -out $CURRENT_DIR/labs/0-certs/cakey.pem 4096
+openssl genrsa -out $CURRENT_DIR/labs/0-certs/cakey.pem 4096
 
 ## generate rootCA certificate
-openssl req -new -x509 -days 3650  -config $CURRENT_DIR/labs/0-certs/server.conf  -key $CURRENT_DIR/labs/0-certs/cakey.pem -out $CURRENT_DIR/labs/0-certs/ca.pem
+openssl req -new -x509 -days 3650 -config $CURRENT_DIR/labs/0-certs/ca.conf -key $CURRENT_DIR/labs/0-certs/cakey.pem -out $CURRENT_DIR/labs/0-certs/ca.pem
 
 ## Verify the rootCA certificate content and X.509 extensions
 openssl x509 -noout -text -in $CURRENT_DIR/labs/0-certs/ca.pem

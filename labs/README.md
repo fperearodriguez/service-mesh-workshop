@@ -32,12 +32,13 @@ export MYSQL_CLUSTER_IP=$(oc get svc mysql -n istio-system -o json | jq -r '.spe
 find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$EXTERNAL_DOMAIN/$EXTERNAL_DOMAIN/g"
 find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$USER_NAMESPACE/$USER_NAMESPACE/g"
 find ./labs/4-ratings-egress/ -type f -print0 | xargs -0 sed -i "s/\$MYSQL_CLUSTER_IP/$MYSQL_CLUSTER_IP/g"
+find ./labs/0-certs/ -type f -print0 | xargs -0 sed -i "s/\$HOSTNAME/$HOSTNAME/g"
 ```
 
 If you try to create the Service Mesh Member object, you will receive the following error:
 
 ```
-oc apply -n user1-front -f ./labs/1-ossm-networking/smm-front.yaml
+oc apply -n $USER_NAMESPACE-front -f ./labs/1-ossm-networking/smm-front.yaml
 ----
 Error from server: error when creating "./labs/1-ossm-networking/smm-front.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
 ```
@@ -45,7 +46,7 @@ Error from server: error when creating "./labs/1-ossm-networking/smm-front.yaml"
 Grant user permissions to access the mesh by granting the _mesh-user_ role: <mark> This command must be executed by the OSSM admins </mark>
 
 ```
-oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user user1
+oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user $USER_NAMESPACE
 ```
 
 This use case will be use in the application deployment step with your user.
@@ -54,7 +55,7 @@ This use case will be use in the application deployment step with your user.
 Create the TLS certificates to use mTLS between the client and the Istio Ingress Gateway:
 ```bash
 labs/0-certs/certs.sh
-oc create secret generic user1-ingress-gateway-certs -n istio-system --from-file=tls.crt=./labs/0-certs/server.pem --from-file=tls.key=./labs/0-certs/server.key --from-file=ca.crt=./labs/0-certs/ca.pem
+oc create secret generic $USER_NAMESPACE-ingress-gateway-certs -n istio-system --from-file=tls.crt=./labs/0-certs/server.pem --from-file=tls.key=./labs/0-certs/server.key --from-file=ca.crt=./labs/0-certs/ca.pem
 ```
 
 ## Deploying the bookinfo example application
@@ -84,8 +85,8 @@ The traffic flow is:
 First, add the OCP projects to the Service Mesh:
 
 ```bash
-oc apply -n user1-front -f ./labs/1-ossm-networking/smm-front.yaml
-oc apply -n user1-back -f ./labs/1-ossm-networking/smm-back.yaml
+oc apply -n $USER_NAMESPACE-front -f ./labs/1-ossm-networking/smm-front.yaml
+oc apply -n $USER_NAMESPACE-back -f ./labs/1-ossm-networking/smm-back.yaml
 ```
 
 #### Default OSSM networking
@@ -98,20 +99,20 @@ Create the Istio Ingress Gateway
 oc apply -f ./labs/1-ossm-networking/gw-ingress-http-https.yaml
 ```
 
-The Bookinfo application will be exposed in the public route user1.$EXTERNAL_DOMAIN.
+The Bookinfo application will be exposed in the public route $USER_NAMESPACE.$EXTERNAL_DOMAIN.
 
 #### Deploying the Bookinfo application
 
 Let's deploy the front-end of the application, the virtual service and the destination rule of the same:
 
 ```bash
-oc apply -f ./labs/2-front/ -n user1-front
+oc apply -f ./labs/2-front/ -n $USER_NAMESPACE-front
 ```
 
 But for the frontend to work, we need to deploy also the backend of the application:
 
 ```bash
-oc apply -f ./labs/3-back/ -n user1-back
+oc apply -f ./labs/3-back/ -n $USER_NAMESPACE-back
 oc process -f ./labs/3-back/bookinfo-ratings-mysql.yaml --param-file=./labs/3-back/params.env | oc apply -n $USER_NAMESPACE-back -f -
 ```
 
@@ -122,4 +123,22 @@ oc apply -n $USER_NAMESPACE-back -f ./labs/4-ratings-egress/dr-ratings-egress.ya
 oc apply -n $USER_NAMESPACE-back -f ./labs/4-ratings-egress/vs-ratings-egress.yaml
 ```
 
-At this point, the application will be accesible tr
+At this point, the application will be accesible from outside the cluster.
+
+### Access the application
+
+The application is exposed using HTTP and Mutual HTTPS. You can get the public OCP route by executing:
+```bash
+oc get routes -n istio-system | grep bookinfo-$USER_NAMESPACE
+```
+
+Two routes must exist, one for HTTP2 and one for HTTPS. To connect to the HTTP2 route, just execute:
+```bash
+curl -Iv http://bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN/productpage
+```
+
+To connect to the HTTPS route, the client certificates must be used in the curl line:
+```bash
+curl -vI https://bookinfo-$USER_NAMESPACE.secure.$EXTERNAL_DOMAIN/productpage --cacert labs/0-certs/ca.pem --cert labs/0-certs/client.pem --key labs/0-certs/client.key
+```
+

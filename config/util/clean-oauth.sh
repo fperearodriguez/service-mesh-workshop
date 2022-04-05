@@ -8,6 +8,7 @@ for user in $(cat $CURRENT_DIR/users.txt);do
   echo "Deleting roles from user $user"
   oc adm policy remove-user $user -n openshift-ingress-operator
   oc adm policy remove-user $user -n istio-system
+  oc delete secret $user-ingress-gateway-certs -n istio-system --ignore-not-found=true
 done
 
 echo "Creating htpasswd file"

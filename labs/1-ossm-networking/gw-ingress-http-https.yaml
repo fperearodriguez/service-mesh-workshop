@@ -12,13 +12,13 @@ spec:
       name: http2
       protocol: HTTP2
     hosts:
-    - 'bookinfo-$USER_NAMESPACE.apps.$EXTERNAL_DOMAIN'
+    - 'bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN'
   - port:
       number: 443
       name: https
       protocol: HTTPS
     hosts:
-    - 'bookinfo-$USER_NAMESPACE.secure.apps.$EXTERNAL_DOMAIN'
+    - 'bookinfo-$USER_NAMESPACE.secure.$EXTERNAL_DOMAIN'
     tls:
       credentialName: $USER_NAMESPACE-ingress-gateway-certs
       mode: MUTUAL
