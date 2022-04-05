@@ -352,7 +352,6 @@ oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab5/dr-ratings-ou
 
 Once the OutlierDetection has been applied to ratings service, run some tests again. You should notice that there should only be some errors at first and between the check interval.
 
-Delete VS
 Finally, delete the VS used
 ```bash
 oc delete -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab5/
