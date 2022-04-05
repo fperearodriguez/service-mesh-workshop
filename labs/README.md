@@ -61,13 +61,6 @@ The traffic flow is:
 
 ### Deploy the Bookinfo application Namespaces (productpage=$user-front, reviews|ratings|details=$user-back)
 
-First, add the OCP projects to the Service Mesh:
-
-```bash
-oc apply -n $USER_NAMESPACE-front -f ./labs/1-ossm-networking/smm-front.yaml
-oc apply -n $USER_NAMESPACE-back -f ./labs/1-ossm-networking/smm-back.yaml
-```
-
 #### Default OSSM networking
 
 Create the Istio Gateway for exposing the application outside the cluster.
