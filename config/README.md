@@ -53,16 +53,15 @@ NAME    READY   STATUS            PROFILES      VERSION   AGE
 basic   10/10   ComponentsReady   ["default"]   2.1.1     2m10s
 ```
 
+### Configuring OCP oauth
+Add the users to the file [Oauth File](./config/util/users.txt) and execute from the root path:
+```bash
+config/util/oauth.sh
+```
+
 ### OpenShift Service Mesh member roll (SMMR)
 
 The *ServiceMeshMemberRoll* object lists the projects that belong to the Control Plane. Any project that is not set in this object, is treated as external to the Service Mesh. This object must exist in the Service Mesh with the name *default*.
-
-This object can not be created empty, at least must contain an existing namespace. Let's create a dummy project:
-
-Create the dummy project called *my-awesome-project*
-```bash
-oc new-project my-awesome-project
-```
 
 Create the SMMR
 ```bash
@@ -75,12 +74,6 @@ oc get smmr default -n istio-system -oyaml
 ---
 NAME      READY   STATUS       AGE
 default   1/1     Configured   5s
-```
-
-### Configuring OCP oauth
-Add the users to the file [Oauth File](./config/util/users.txt) and execute from the root path:
-```bash
-config/util/oauth.sh
 ```
 
 ### Deploying the MySQL instances

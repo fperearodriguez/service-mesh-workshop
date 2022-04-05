@@ -19,10 +19,6 @@ cd service-mesh-workshop
 
 ## Adding services to the mesh
 
-### Openshift Service Mesh Member
-
-Using this object, users who don't have privileges to add members to the _ServiceMeshMemberRoll_ (e.g. users who can't access the Control Plane's namespace) can join their namespaces to the Service Mesh. But, these users need the _mesh-user_ role.
-
 First, replace the User variables:
 
 ```bash
@@ -34,23 +30,6 @@ find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$USER_NAMESPACE/$USER_NAMESPA
 find ./labs/4-ratings-egress/ -type f -print0 | xargs -0 sed -i "s/\$MYSQL_CLUSTER_IP/$MYSQL_CLUSTER_IP/g"
 find ./labs/0-certs/ -type f -print0 | xargs -0 sed -i "s/\$HOSTNAME/$HOSTNAME/g"
 ```
-
-If you try to create the Service Mesh Member object, you will receive the following error:
-
-```
-oc apply -n $USER_NAMESPACE-front -f ./labs/1-ossm-networking/smm-front.yaml
-----
-Error from server: error when creating "./labs/1-ossm-networking/smm-front.yaml": admission webhook "smm.validation.maistra.io" denied the request: user '$user' does not have permission to use ServiceMeshControlPlane istio-system/basic
-```
-
-Grant user permissions to access the mesh by granting the _mesh-user_ role: <mark> This command must be executed by the OSSM admins </mark>
-
-```
-oc policy add-role-to-user -n istio-system --role-namespace istio-system mesh-user $USER_NAMESPACE
-```
-
-This use case will be use in the application deployment step with your user.
-
 ### Create TLS certificates
 Create the TLS certificates to use mTLS between the client and the Istio Ingress Gateway:
 ```bash
@@ -81,13 +60,6 @@ The traffic flow is:
 <img src="./full-application-flow.png" alt="Bookinfo app, front and back tiers" width=100%>
 
 ### Deploy the Bookinfo application Namespaces (productpage=$user-front, reviews|ratings|details=$user-back)
-
-First, add the OCP projects to the Service Mesh:
-
-```bash
-oc apply -n $USER_NAMESPACE-front -f ./labs/1-ossm-networking/smm-front.yaml
-oc apply -n $USER_NAMESPACE-back -f ./labs/1-ossm-networking/smm-back.yaml
-```
 
 #### Default OSSM networking
 
