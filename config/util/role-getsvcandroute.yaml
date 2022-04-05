@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: getsvcandroute
+  namespace: istio-system
+rules:
+- apiGroups:
+  - ""
+  - "route.openshift.io"
+  resources:
+  - services
+  - routes
+  verbs:
+  - get
+  - list

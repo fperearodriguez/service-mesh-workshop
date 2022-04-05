@@ -4,20 +4,17 @@ set -e
 
 CURRENT_DIR=$(pwd)/config/util
 
-echo "Creating roles"
-oc apply -n openshift-ingress-operator -f ./config/util/role-getingressdomain.yaml
-oc apply -n istio-system -f ./config/util/role-createsdssecrets.yaml
-oc apply -n istio-system -f ./config/util/role-getsvcandroute.yaml
+for user in $(cat $CURRENT_DIR/users.txt);do
+  echo "Deleting roles from user $user"
+  oc adm policy remove-user $user -n openshift-ingress-operator
+  oc adm policy remove-user $user -n istio-system
+  oc delete secret $user-ingress-gateway-certs -n istio-system --ignore-not-found=true
+done
 
 echo "Creating htpasswd file"
 rm -f $CURRENT_DIR/oauth/htpasswd
 
 htpasswd -c -b -B $CURRENT_DIR/oauth/htpasswd admin redhat
-
-for user in $(cat $CURRENT_DIR/users.txt);do
-  echo "Creating $user username"
-  htpasswd -b -B $CURRENT_DIR/oauth/htpasswd $user $user
-done
 
 echo "Creating HTPasswd Secret"
 oc delete secret htpass-secret -n openshift-config
@@ -41,13 +38,15 @@ EOF_IP
 oc apply -f $CURRENT_DIR/oauth/cluster-oauth.yaml
 
 for user in $(cat $CURRENT_DIR/users.txt);do
-  echo "Adding roles to user $user"
-  oc adm policy add-role-to-user getingressdomain $user --role-namespace=openshift-ingress-operator -n openshift-ingress-operator
-  oc adm policy add-role-to-user createsdssecrets $user --role-namespace=istio-system -n istio-system
-  oc adm policy add-role-to-user getsvcandroute $user --role-namespace=istio-system -n istio-system
-  oc adm new-project $user-front --display-name=$user-front --description=$user-front --admin=$user
-  oc adm new-project $user-back --display-name=$user-back --description=$user-back --admin=$user
+  echo "Deleting projects from user $user"
+  oc delete project $user-front
+  oc delete project $user-back
 done
+
+echo "Deleting role"
+oc delete -n openshift-ingress-operator -f ./config/util/role-getingressdomain.yaml --ignore-not-found=true
+oc delete -n istio-system -f ./config/util/role-createsdssecrets.yaml --ignore-not-found=true
+oc delete -n istio-system -f ./config/util/role-getsvcandroute.yaml --ignore-not-found=true
 
 echo "Giving cluster-admin role to admin user"
 oc adm policy add-cluster-role-to-user cluster-admin admin
