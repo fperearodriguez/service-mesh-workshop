@@ -5,6 +5,7 @@ metadata:
     app: ratings
     version: v1
   name: ratings-v1
+  namespace: $USER_NAMESPACE-back
 spec:
   progressDeadlineSeconds: 600
   replicas: 3

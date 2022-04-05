@@ -6,13 +6,13 @@ spec:
   hosts:
   - reviews
   exportTo:
-  - back
-  - front
+  - $USER_NAMESPACE-back
+  - $USER_NAMESPACE-front
   http:
   - match:
     - headers:
         end-user:
-          exact: test-user
+          exact: $USER_NAMESPACE
     route:
     - destination:
         host: reviews

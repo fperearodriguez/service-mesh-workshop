@@ -6,8 +6,8 @@ spec:
   hosts:
   - ratings
   exportTo:
-  - back
-  - front
+  - $USER_NAMESPACE-back
+  - $USER_NAMESPACE-front
   http:
   - fault:
       abort:
