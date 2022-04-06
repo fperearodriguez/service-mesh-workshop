@@ -7,7 +7,7 @@ This README contains the instructions for the Service Mesh Workshop for the Iber
 - [Adding services to the mesh](#adding-services-to-the-mesh)
 - [Deploying the bookinfo example application](#deploying-the-bookinfo-example-application)
 - [Traffic management](#traffic-management)
-- [Security](#security
+- [Security](#security)
 
 ## Prerequisites
 
