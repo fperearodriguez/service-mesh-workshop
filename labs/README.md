@@ -7,6 +7,7 @@ This README contains the instructions for the Service Mesh Workshop for the Iber
 - [Adding services to the mesh](#adding-services-to-the-mesh)
 - [Deploying the bookinfo example application](#deploying-the-bookinfo-example-application)
 - [Traffic management](#traffic-management)
+- [Security](#security
 
 ## Prerequisites
 
@@ -31,8 +32,8 @@ First, replace the User variables:
 export EXTERNAL_DOMAIN=$(oc -n openshift-ingress-operator get ingresscontrollers default -o json | jq -r '.status.domain')
 export USER_NAMESPACE=$(oc whoami)
 export MYSQL_CLUSTER_IP=$(oc get svc mysql -n istio-system -o json | jq -r '.spec.clusterIP')
-find ./labs/ -type f -print0 | xargs -0 sed -i "s/\apps.fperod.cdd1.sandbox988.opentlc.com/apps.fperod.cdd1.sandbox988.opentlc.com/g"
-find ./labs/ -type f -print0 | xargs -0 sed -i "s/\user1/user1/g"
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$EXTERNAL_DOMAIN/$EXTERNAL_DOMAIN/g"
+find ./labs/ -type f -print0 | xargs -0 sed -i "s/\$USER_NAMESPACE/$USER_NAMESPACE/g"
 find ./labs/4-ratings-egress/ -type f -print0 | xargs -0 sed -i "s/\$MYSQL_CLUSTER_IP/$MYSQL_CLUSTER_IP/g"
 find ./labs/0-certs/ -type f -print0 | xargs -0 sed -i "s/\$HOSTNAME/$HOSTNAME/g"
 ```
@@ -40,7 +41,7 @@ find ./labs/0-certs/ -type f -print0 | xargs -0 sed -i "s/\$HOSTNAME/$HOSTNAME/g
 Create the TLS certificates to use mTLS between the client and the Istio Ingress Gateway:
 ```bash
 labs/0-certs/certs.sh
-oc create secret generic user1-ingress-gateway-certs -n istio-system --from-file=tls.crt=./labs/0-certs/server.pem --from-file=tls.key=./labs/0-certs/server.key --from-file=ca.crt=./labs/0-certs/ca.pem
+oc create secret generic $USER_NAMESPACE-ingress-gateway-certs -n istio-system --from-file=tls.crt=./labs/0-certs/server.pem --from-file=tls.key=./labs/0-certs/server.key --from-file=ca.crt=./labs/0-certs/ca.pem
 ```
 
 ## Deploying the bookinfo example application
@@ -77,28 +78,28 @@ Create the Istio Ingress Gateway
 oc apply -f ./labs/1-ossm-networking/gw-ingress-http-https.yaml
 ```
 
-The Bookinfo application will be exposed in the public route user1.apps.fperod.cdd1.sandbox988.opentlc.com.
+The Bookinfo application will be exposed in the public route $USER_NAMESPACE.$EXTERNAL_DOMAIN.
 
 #### Deploying the Bookinfo application
 
 Let's deploy the front-end of the application, the virtual service and the destination rule of the same:
 
 ```bash
-oc apply -f ./labs/2-front/ -n user1-front
+oc apply -f ./labs/2-front/ -n $USER_NAMESPACE-front
 ```
 
 But for the frontend to work, we need to deploy also the backend of the application:
 
 ```bash
-oc apply -f ./labs/3-back/ -n user1-back
-oc process -f ./labs/3-back/bookinfo-ratings-mysql.yaml --param-file=./labs/3-back/params.env | oc apply -n user1-back -f -
+oc apply -f ./labs/3-back/ -n $USER_NAMESPACE-back
+oc process -f ./labs/3-back/bookinfo-ratings-mysql.yaml --param-file=./labs/3-back/params.env | oc apply -n $USER_NAMESPACE-back -f -
 ```
 
 #### Create the Istio objects to reach the external database
 Route the traffic from _ratings_ to the  egress gateway located in _istio-system_ namespace.
 ```bash
-oc apply -n user1-back -f ./labs/4-ratings-egress/dr-ratings-egress.yaml
-oc apply -n user1-back -f ./labs/4-ratings-egress/vs-ratings-egress.yaml
+oc apply -n $USER_NAMESPACE-back -f ./labs/4-ratings-egress/dr-ratings-egress.yaml
+oc apply -n $USER_NAMESPACE-back -f ./labs/4-ratings-egress/vs-ratings-egress.yaml
 ```
 
 At this point, the application will be accesible from outside the cluster.
@@ -107,17 +108,17 @@ At this point, the application will be accesible from outside the cluster.
 
 The application is exposed using HTTP and Mutual HTTPS. You can get the public OCP route by executing:
 ```bash
-oc get routes -n istio-system | grep bookinfo-user1
+oc get routes -n istio-system | grep bookinfo-$USER_NAMESPACE
 ```
 
 Two routes must exist, one for HTTP2 and one for HTTPS. To connect to the HTTP2 route, just execute:
 ```bash
-curl -Iv http://bookinfo-user1.apps.fperod.cdd1.sandbox988.opentlc.com/productpage
+curl -Iv http://bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN/productpage
 ```
 
 To connect to the HTTPS route, the client certificates must be used in the curl line:
 ```bash
-curl -vI https://bookinfo-user1.secure.apps.fperod.cdd1.sandbox988.opentlc.com/productpage --cacert labs/0-certs/ca.pem --cert labs/0-certs/client.pem --key labs/0-certs/client.key
+curl -vI https://bookinfo-$USER_NAMESPACE.secure.$EXTERNAL_DOMAIN/productpage --cacert labs/0-certs/ca.pem --cert labs/0-certs/client.pem --key labs/0-certs/client.key
 ```
 
 ## Traffic management
@@ -129,7 +130,7 @@ In this lab we will apply the rules to make all requests go to version 2 of revi
 
 Route the traffic to the _v2_ subset:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab1/vs-reviews-v2.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab1/vs-reviews-v2.yaml
 ```
 
 #### Route traffic based on headers
@@ -137,14 +138,14 @@ Now let’s think that we have a new version for the application and you want to
 
 Route the traffic based on the header defined in the VS:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab1/vs-reviews-headers.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab1/vs-reviews-headers.yaml
 ```
 
-To test this lab, click on the Sign in button at the top right of the Product Page and login as "user1", or the user you editted in the yaml if you decided to do that. You have to write it exactly like in the yaml. And you can type whatever you want in the Password field. Then, select the _Request distribution_ field from Display menu un Kiali.
+To test this lab, click on the Sign in button at the top right of the Product Page and login as "$USER_NAMESPACE", or the user you editted in the yaml if you decided to do that. You have to write it exactly like in the yaml. And you can type whatever you want in the Password field. Then, select the _Request distribution_ field from Display menu un Kiali.
 
 Finally, delete the VS used
 ```
-oc delete -n user1-back -f labs/5-traffic-management/lab1/
+oc delete -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab1/
 ```
 
 ### Lab 2: Traffic Shifting and Weight Balancing
@@ -155,7 +156,7 @@ For example, you might migrate traffic from an older version to a new version. I
 
 First, open a terminal an generate traffic:
 ```
-watch -n 1 curl -I http://bookinfo-user1.apps.fperod.cdd1.sandbox988.opentlc.com/productpage
+watch -n 1 curl -I http://bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN/productpage
 ```
 
 Select the _Request distribution_ field from Display menu un Kiali.
@@ -167,7 +168,7 @@ Note that the sum of weights across destinations should be == 100. If there is o
 
 Apply this configuration:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab2/vs-reviews-shifting-90-10.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab2/vs-reviews-shifting-90-10.yaml
 ```
 
 Check the result in Kiali after a while.
@@ -177,7 +178,7 @@ The _reviews_ VS to add a 50/50 routing rule.
 
 Apply this configuration:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab2/vs-reviews-shifting-50-50.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab2/vs-reviews-shifting-50-50.yaml
 ```
 
 Check the result in Kiali after a while.
@@ -187,31 +188,31 @@ The _reviews_ VS to add a 100% routing rule to the new service.
 
 Apply this configuration:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab2/vs-reviews-shifting-0-100.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab2/vs-reviews-shifting-0-100.yaml
 ```
 
 Check the result in Kiali after a while.
 
 Finally, delete the VS used
 ```
-oc delete -n user1-back -f labs/5-traffic-management/lab2/
+oc delete -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab2/
 ```
 
 ### Lab 3: Fault Injection
 OpenShift Service Mesh has mechanisms to inject faults in your application to test how it will behave when a real fault happens. This is very useful to check if your application’s recovery policies aren’t too restrictive.
 
 
-In this lab you will inject two different faults in your application. A delay and an abort. Delays are timing failures and aborts are crash failures. You are going to use a similar method than in Lab 1 - Requests Routing when you routed requests using http headers, but this time you are going to inject faults for user "user1".
+In this lab you will inject two different faults in your application. A delay and an abort. Delays are timing failures and aborts are crash failures. You are going to use a similar method than in Lab 1 - Requests Routing when you routed requests using http headers, but this time you are going to inject faults for user "$USER_NAMESPACE".
 
 #### Delay
 For the delay you are going to add 7 seconds of delay between the _reviews_ and _ratings_ services.
 
 Apply the delay:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab3/vs-delay.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab3/vs-delay.yaml
 ```
 
-Visit the **bookinfo** page and login with the _user1_ username. You will notice that it will take 7 seconds to load and you will see the following error in the reviews part: "Sorry, product reviews are currently unavailable for this book.".
+Visit the **bookinfo** page and login with the _$USER_NAMESPACE_ username. You will notice that it will take 7 seconds to load and you will see the following error in the reviews part: "Sorry, product reviews are currently unavailable for this book.".
 
 This happens because there is a hard-coded timeout between _productpage_ service and _reviews_ service of 3 seconds and 1 retry, so a total of 6 seconds. Then, you can’t see the _reviews_ because of this timeout.
 
@@ -220,17 +221,17 @@ Check in Kiali the result after a while, you will see some errors.
 #### Abort
 Apply the abort:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab3/vs-abort.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab3/vs-abort.yaml
 ```
 
-Now you don’t have to be logged in as _user1_, enter again to your Product Page and now you will see the _reviews_, but the ratings will give you the following error: "Ratings service is currently unavailable". This is because this time the _ratings_ service is returning an error 500.
+Now you don’t have to be logged in as _$USER_NAMESPACE_, enter again to your Product Page and now you will see the _reviews_, but the ratings will give you the following error: "Ratings service is currently unavailable". This is because this time the _ratings_ service is returning an error 500.
 
 Check in Kiali the result after a while. You will see the error [FI] Aborted via Fault Injection.
 
 
 Finally, delete the VS used
 ```bash
-oc delete -n user1-back -f labs/5-traffic-management/lab3/
+oc delete -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab3/
 ```
 
 ### Lab 4: Requests timeouts
@@ -241,14 +242,14 @@ To see its effect, however, you also introduce an artificial 2 second delay in c
 #### Adding a delay to ratings service
 First, route requests to reviews:v2 service (a version that calls the ratings service).
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab4/vs-reviews-v2.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab4/vs-reviews-v2.yaml
 ```
 
 Select the _Request distribution_ field from Display menu un Kiali.
 
 Add a 2 second delay to calls to the _ratings_ service:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab4/vs-ratings-delay.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab4/vs-ratings-delay.yaml
 ```
 
 Select the _Response Time_ field from Display menu un Kiali.
@@ -258,14 +259,14 @@ Now add a half second request timeout for calls to the _reviews_ service.
 
 Apply this configuration:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab4/vs-reviews-timeout.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab4/vs-reviews-timeout.yaml
 ```
 
 Check in Kiali the result after a while. You will get an error in the _Reviews_ service
 
 Finally, delete the VS used
 ```bash
-oc delete -n user1-back -f labs/5-traffic-management/lab4/
+oc delete -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab4/
 ```
 
 ### Lab 5: Circuit Breaking & Outlier Detection
@@ -276,12 +277,12 @@ For this task, we will start by setting a CircuitBreaking in reviews service in 
 
 Configure this change by executing:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab5/reviews-only-to-v2-and-cb.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab5/reviews-only-to-v2-and-cb.yaml
 ```
 
 To validate that everything works fine with a single connection to that service, run:
 ```bash
-while true; do curl -s http://bookinfo-user1.apps.fperod.cdd1.sandbox988.opentlc.com/productpage | grep -i reviews; sleep 0.5 ; done
+while true; do curl -s http://bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN/productpage | grep -i reviews; sleep 0.5 ; done
 
       <h4 class="text-center text-primary">Book Reviews</h4>
       <h4 class="text-center text-primary">Book Reviews</h4>
@@ -293,7 +294,7 @@ Notice that 100% of the traffic is succesfully managed by reviews service. In ad
 
 Let’s now generate some load…​ by adding a 10 clients calling out bookinfo app:
 ```bash
-seq 1 10 | xargs -n1 -P10 curl -s http://bookinfo-user1.apps.fperod.cdd1.sandbox988.opentlc.com/productpage | grep -i reviews
+seq 1 10 | xargs -n1 -P10 curl -s http://bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN/productpage | grep -i reviews
 
       <h4 class="text-center text-primary">Book Reviews</h4>
       <h4 class="text-center text-primary">Book Reviews</h4>
@@ -313,24 +314,24 @@ In this lab, we are going to discover how an unhealthy pod, which we don't know 
 
 First, we need to deploy a custom ratings deployment:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab5/deploy-ratings.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab5/deploy-ratings.yaml
 ```
 
 Route all the traffic to the v1 version of *ratings* microservice
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab5/vsdr-ratings-v1.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab5/vsdr-ratings-v1.yaml
 ```
 
 Then, let’s randomly make one pod of our ratings service to fail by executing:
 ```bash
-oc exec -n user1-back -c ratings  $(oc get pods -n user1-back -o NAME | grep ratings-v1 | tail -n1) -- curl -s ratings:9080/faulty
+oc exec -n $USER_NAMESPACE-back -c ratings  $(oc get pods -n $USER_NAMESPACE-back -o NAME | grep ratings-v1 | tail -n1) -- curl -s ratings:9080/faulty
 
 {"status":"A ratings pod will start to fail"}
 ```
 
 And run some tests now. Let’s have a look at the output as there will be some failures comming from an unknown (yet) ratings pod:
 ```bash
-while true; do curl -s http://bookinfo-user1.apps.fperod.cdd1.sandbox988.opentlc.com/productpage | egrep "Reviewer1|Reviewer2|Ratings service is currently unavailable"; sleep 0.5 ; done
+while true; do curl -s http://bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN/productpage | egrep "Reviewer1|Reviewer2|Ratings service is currently unavailable"; sleep 0.5 ; done
         <small>Reviewer1</small>
         <small>Reviewer2</small>
         <small>Reviewer1</small>
@@ -353,13 +354,62 @@ while true; do curl -s http://bookinfo-user1.apps.fperod.cdd1.sandbox988.opentlc
 
 It is time to make our services mesh more resiliant and see the effect of applying an OutlierDetection policy over ratings service:
 ```bash
-oc apply -n user1-back -f labs/5-traffic-management/lab5/dr-ratings-outlier-detection.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab5/dr-ratings-outlier-detection.yaml
 ```
 
 Once the OutlierDetection has been applied to ratings service, run some tests again. You should notice that there should only be some errors at first and between the check interval.
 
 Finally, delete the VS used
 ```bash
-oc delete -n user1-back -f labs/5-traffic-management/lab5/
+oc delete -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab5/
 ```
 
+## Security
+Let's do some taks about security with OSSM.
+
+### Zero trust with OSSM
+Let's configure the bookinfo application to properly verify the source by implementing Zero trust with RBAC.
+
+First, keep in mind that mTLS must be enabled across the Service Mesh.
+
+1. In a Zero trust model, the main idea is to trust nothing by default. This setting is easy with a single Authorization Policy:
+```
+oc apply -n $USER_NAMESPACE-front -f labs/6-security/1-ap-front-deny-all.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/6-security/1-ap-back-deny-all.yaml
+```
+
+Generate traffic. 
+```bash
+curl -vI https://bookinfo-$USER_NAMESPACE.secure.$EXTERNAL_DOMAIN/productpage --cacert labs/0-certs/ca.pem --cert labs/0-certs/client.pem --key labs/0-certs/client.key
+```
+
+You will get a 403 error code. Also, you can visualize the error in Kiali.
+
+2. Allow access to the productpage application only from the Istio Ingress Gateway.
+```bash
+oc apply -n $USER_NAMESPACE-front -f labs/6-security/2-ap-allow-ingress-productpage.yaml
+```
+
+The front page will be accesible again, but the backend applications will be inaccessible.
+
+At this point, we are going to deploy a sleep application to connect to the productpage also.
+```
+oc apply -n $USER_NAMESPACE-front -f labs/6-security/sleep/deploy.yaml
+```
+
+The idea is to connect from the _sleep_ pod to the productpage service directly, connecting to the productpage's Kubernetes Service.
+```bash
+oc exec -n $USER_NAMESPACE-front $(oc get pods -n $USER_NAMESPACE-front --no-headers | grep sleep | awk '{print $1}') -- curl -v http://productpage:9080/productpage
+```
+
+You will get a 403 Error Code with the message
+```
+RBAC: access denied
+```
+
+3. Allow access to the backend applications.
+```bash
+oc apply -n $USER_NAMESPACE-back -f labs/6-security/3-ap-details.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/6-security/3-ap-ratings.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/6-security/3-ap-reviews.yaml
+```
