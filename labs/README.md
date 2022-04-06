@@ -2,6 +2,13 @@
 
 This README contains the instructions for the Service Mesh Workshop for the Iberia Customer Success Meeting. If you are participating live, please refer to the facilitators for instructions on how to use the cluster that is going to be provided. If you are doing this on your own, kindly follow the prerequisites and go to the `config` folder before starting this workshop.
 
+- [Prerequisites](#prerequisites)
+- [Download the workshop files](#download-the-workshop-files)
+- [Adding services to the mesh](#adding-services-to-the-mesh)
+- [Deploying the bookinfo example application](#deploying-the-bookinfo-example-application)
+- [Traffic management](#traffic-management)
+- [Security](#security
+
 ## Prerequisites
 
 - OCP cluster up and running with version 4.6 or higher.
@@ -357,3 +364,52 @@ Finally, delete the VS used
 oc delete -n $USER_NAMESPACE-back -f labs/5-traffic-management/lab5/
 ```
 
+## Security
+Let's do some taks about security with OSSM.
+
+### Zero trust with OSSM
+Let's configure the bookinfo application to properly verify the source by implementing Zero trust with RBAC.
+
+First, keep in mind that mTLS must be enabled across the Service Mesh.
+
+1. In a Zero trust model, the main idea is to trust nothing by default. This setting is easy with a single Authorization Policy:
+```
+oc apply -n $USER_NAMESPACE-front -f labs/6-security/1-ap-front-deny-all.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/6-security/1-ap-back-deny-all.yaml
+```
+
+Generate traffic. 
+```bash
+curl -vI https://bookinfo-$USER_NAMESPACE.secure.$EXTERNAL_DOMAIN/productpage --cacert labs/0-certs/ca.pem --cert labs/0-certs/client.pem --key labs/0-certs/client.key
+```
+
+You will get a 403 error code. Also, you can visualize the error in Kiali.
+
+2. Allow access to the productpage application only from the Istio Ingress Gateway.
+```bash
+oc apply -n $USER_NAMESPACE-front -f labs/6-security/2-ap-allow-ingress-productpage.yaml
+```
+
+The front page will be accesible again, but the backend applications will be inaccessible.
+
+At this point, we are going to deploy a sleep application to connect to the productpage also.
+```
+oc apply -n $USER_NAMESPACE-front -f labs/6-security/sleep/deploy.yaml
+```
+
+The idea is to connect from the _sleep_ pod to the productpage service directly, connecting to the productpage's Kubernetes Service.
+```bash
+oc exec -n $USER_NAMESPACE-front $(oc get pods -n $USER_NAMESPACE-front --no-headers | grep sleep | awk '{print $1}') -- curl -v http://productpage:9080/productpage
+```
+
+You will get a 403 Error Code with the message
+```
+RBAC: access denied
+```
+
+3. Allow access to the backend applications.
+```bash
+oc apply -n $USER_NAMESPACE-back -f labs/6-security/3-ap-details.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/6-security/3-ap-ratings.yaml
+oc apply -n $USER_NAMESPACE-back -f labs/6-security/3-ap-reviews.yaml
+```
