@@ -82,9 +82,3 @@ for user in $(cat $CURRENT_DIR/config/util/users.txt);do
     echo " "
     sleep 1
 done
-
-for user in $(cat $CURRENT_DIR/users.txt);do
-  echo "Deleting projects from user $user"
-  oc delete project $user-front
-  oc delete project $user-back
-done
