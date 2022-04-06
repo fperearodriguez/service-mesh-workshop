@@ -2,11 +2,11 @@
 
 This README contains the instructions for the Service Mesh Workshop for the Iberia Customer Success Meeting. If you are participating live, please refer to the facilitators for instructions on how to use the cluster that is going to be provided. If you are doing this on your own, kindly follow the prerequisites and go to the `config` folder before starting this workshop.
 
-- [Prerequisites](#Prerequisites)
-- [Download the workshop files](#Download-the-workshop-files)
-- [Adding services to the mesh](#Adding-services-to-the-mesh)
-- [Deploying the bookinfo example application](#Deploying-the-bookinfo-example-application)
-- [Traffic management](#Traffic-management)
+- [Prerequisites](#prerequisites)
+- [Download the workshop files](#download-the-workshop-files)
+- [Adding services to the mesh](#adding-services-to-the-mesh)
+- [Deploying the bookinfo example application](#deploying-the-bookinfo-example-application)
+- [Traffic management](#traffic-management)
 
 ## Prerequisites
 
