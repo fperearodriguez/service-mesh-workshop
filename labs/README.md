@@ -1,6 +1,6 @@
 # Service Mesh Workshop
 
-This README contains the instructions for the Service Mesh Workshop for the Iberia Customer Success Meeting. If you are participating live, please refer to the facilitators for instructions on how to use the cluster that is going to be provided. If you are doing this on your own, kindly follow the prerequisites and go to the `config` folder before starting this workshop.
+This README contains the instructions for the Red Hat OpenShift Service Mesh Workshop. If you are doing this on your own, kindly follow the prerequisites and go to the `config` folder before starting this workshop.
 
 - [Prerequisites](#prerequisites)
 - [Download the workshop files](#download-the-workshop-files)
@@ -11,7 +11,7 @@ This README contains the instructions for the Service Mesh Workshop for the Iber
 
 ## Prerequisites
 
-- OCP cluster up and running with version 4.6 or higher.
+- OCP cluster up and running with version 4.8 or higher.
 - OpenShift Service Mesh installed
 - OC cli installed.
 
@@ -20,7 +20,7 @@ This README contains the instructions for the Service Mesh Workshop for the Iber
 First of all, download the workshop files:
 
 ```bash
-git clone ssh://git@gitlab.consulting.redhat.com:2222/iberia-consulting/training-and-enablement/meetups/service-mesh-workshop.git
+git clone git@github.com:fperearodriguez/service-mesh-workshop.git
 cd service-mesh-workshop
 ```
 
