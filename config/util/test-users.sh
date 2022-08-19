@@ -60,7 +60,7 @@ for user in $(cat $CURRENT_DIR/config/util/users.txt);do
 
     echo "Accessing the application via HTTP"
     sleep 1
-    for num in $(seq 1 5)                                                                                                                                                ✘ INT
+    for num in $(seq 1 5)
         do
         curl -I http://bookinfo-$USER_NAMESPACE.$EXTERNAL_DOMAIN/productpage
         sleep 1
@@ -68,7 +68,7 @@ for user in $(cat $CURRENT_DIR/config/util/users.txt);do
 
     echo "Accessing the application via Mutual HTTPS"
     sleep 1
-    for num in $(seq 1 5)                                                                                                                                                ✘ INT
+    for num in $(seq 1 5)
         do
         curl -I https://bookinfo-$USER_NAMESPACE.secure.$EXTERNAL_DOMAIN/productpage --cacert labs/0-certs/ca.pem --cert labs/0-certs/client.pem --key labs/0-certs/client.key
         sleep 1
