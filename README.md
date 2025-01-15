@@ -1,4 +1,4 @@
-# Service Mesh Workshop
+# Red Hat OpenShift Service Mesh Workshop
 
 Repository to store a Red Hat OpenShift Service Mesh workshop.
 
