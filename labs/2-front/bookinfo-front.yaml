@@ -46,7 +46,7 @@ spec:
       serviceAccountName: bookinfo-productpage
       containers:
       - name: productpage
-        image: quay.io/fperea_rh/bookinfo-productpage:2.0.0
+        image: quay.io/fperea_rh/bookinfo-productpage:2.6.0
         imagePullPolicy: Always
         ports:
         - containerPort: 9080
