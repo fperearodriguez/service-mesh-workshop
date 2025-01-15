@@ -46,7 +46,9 @@ for user in $(cat $CURRENT_DIR/users.txt);do
   oc adm policy add-role-to-user createsdssecrets $user --role-namespace=istio-system -n istio-system
   oc adm policy add-role-to-user getsvcandroute $user --role-namespace=istio-system -n istio-system
   oc adm new-project $user-front --display-name=$user-front --description=$user-front --admin=$user
+  oc label namespace $user-front istio-injection=enabled
   oc adm new-project $user-back --display-name=$user-back --description=$user-back --admin=$user
+  oc label namespace $user-back istio-injection=enabled
 done
 
 echo "Giving cluster-admin role to admin user"

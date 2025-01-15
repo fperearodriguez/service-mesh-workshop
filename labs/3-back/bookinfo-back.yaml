@@ -46,7 +46,7 @@ spec:
       serviceAccountName: bookinfo-details
       containers:
       - name: details
-        image: quay.io/fperea_rh/bookinfo-details:2.0.0
+        image: quay.io/fperea_rh/bookinfo-details:2.6.0
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -99,7 +99,7 @@ spec:
       serviceAccountName: bookinfo-reviews
       containers:
       - name: reviews
-        image: quay.io/fperea_rh/bookinfo-reviews:2.0.0
+        image: quay.io/fperea_rh/bookinfo-reviews:v1-2.6.0
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR
@@ -141,7 +141,7 @@ spec:
       serviceAccountName: bookinfo-reviews
       containers:
       - name: reviews
-        image: quay.io/fperea_rh/bookinfo-reviews:2.0.0-v2
+        image: quay.io/fperea_rh/bookinfo-reviews:v2-2.6.0
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR
@@ -183,7 +183,7 @@ spec:
       serviceAccountName: bookinfo-reviews
       containers:
       - name: reviews
-        image: quay.io/fperea_rh/bookinfo-reviews:2.0.0-v3
+        image: quay.io/fperea_rh/bookinfo-reviews:v3-2.6.0
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_DIR

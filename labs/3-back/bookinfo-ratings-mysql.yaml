@@ -59,7 +59,7 @@ objects:
           serviceAccountName: bookinfo-ratings
           containers:
           - name: ratings
-            image: quay.io/fperea_rh/bookinfo-ratings:1.16.2-v2
+            image: quay.io/fperea_rh/bookinfo-ratings:mysql-2.6.0
             imagePullPolicy: IfNotPresent
             env:
               - name: DB_TYPE
