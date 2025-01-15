@@ -4,120 +4,53 @@ metadata:
   name: basic
   namespace: istio-system
 spec:
-  addons:
-    grafana:
-      enabled: true
-    jaeger:
-      name: jaeger
-      install:
-        storage:
-          type: Memory # or Elasticsearch
-          memory:
-            maxTraces: 100000
-        ingress: # jaeger ingress configuration
-          enabled: true
-    kiali:
-      enabled: true
-      name: kiali
-    prometheus:
-      enabled: true
-  gateways:
-    egress:
-      enabled: true
-      namespace: istio-system
-      runtime:
-        deployment:
-          replicas: 3
-          strategy:
-            rollingUpdate:
-              maxSurge: "1"
-              maxUnavailable: "0"
-            type: RollingUpdate
-      service:
-        ports:
-        - name: http2
-          port: 80
-          targetPort: 8080
-        - name: https
-          port: 443
-          targetPort: 8443
-        - name: http2-secure #Egress port for gRPC usage
-          port: 9443
-          targetPort: 9443
-        - name: status-port
-          port: 15020
-          targetPort: 15020
-    ingress:
-      runtime:
-        deployment:
-          autoScaling:
-            enabled: false
-          replicas: 3
-      service:
-        ports:
-        - name: http2
-          port: 80
-          targetPort: 8080
-        - name: https
-          port: 443
-          targetPort: 8443
-        - name: tls
-          port: 15443
-          targetPort: 15443
-        - name: status-port
-          port: 15020
-          targetPort: 15020
-        type: ClusterIP
-    openshiftRoute:
-      enabled: true
-  general:
-    logging:
-      componentLevels:
-        default: info
-    validationMessages: false
-  policy:
-    type: Istiod
-  profiles:
-  - default
-  proxy:
-    logging:
-      level: info
-    networking:
-      trafficControl:
-        inbound: {}
-        outbound:
-          policy: REGISTRY_ONLY #Only external services can be reached if a Service Entry object is created
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 500m
-        memory: 128Mi
-  runtime:
-    components:
-      pilot:
-        container:
-          resources:
-            limits:
-              cpu: "2"
-              memory: 4Gi
-            requests:
-              cpu: 100m
-              memory: 128Mi
-        deployment:
-          autoScaling:
-            enabled: false
-          replicas: 3
   security:
     controlPlane:
       mtls: true
     dataPlane:
       automtls: true
       mtls: true
-  telemetry:
-    type: Istiod
   tracing:
     sampling: 10000
     type: Jaeger
-  version: v2.1
+  general:
+    logging:
+      componentLevels:
+        default: info
+    validationMessages: true
+  profiles:
+    - default
+  proxy:
+    logging:
+      level: info
+  gateways:
+    egress:
+      enabled: true
+      namespace: istio-system
+      service: {}
+    ingress:
+      enabled: true
+      namespace: istio-system
+      service: {}
+    openshiftRoute:
+      enabled: true
+  addons:
+    grafana:
+      enabled: true
+    jaeger:
+      install:
+        ingress:
+          enabled: true
+        storage:
+          memory:
+            maxTraces: 100000
+          type: Memory
+      name: jaeger
+    kiali:
+      enabled: true
+      name: kiali
+    prometheus:
+      enabled: true
+  version: v2.5
+  telemetry:
+    type: Istiod
