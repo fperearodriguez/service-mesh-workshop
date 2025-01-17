@@ -33,7 +33,7 @@ spec:
       namespace: istio-system
       service: {}
     openshiftRoute:
-      enabled: true
+      enabled: false
   addons:
     grafana:
       enabled: true
